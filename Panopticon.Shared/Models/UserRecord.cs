@@ -9,11 +9,11 @@ namespace Panopticon.Shared.Models
 {
     public class UserRecord
     {
-        [Key]
-        public int Id { get; set; }
-
-        public ulong UserId { get; set; }
-
-        public int TablesFlipped { get; set; }
-    }
+		[Key]
+		public ulong UserId { get; set; }
+		public double LibcraftCoinBalance { get; set; }
+		public int TablesFlipped { get; set; }
+		public bool TimeOut { get; set; }
+		public DateTime LastTimePosted { get; set; }
+	}
 }

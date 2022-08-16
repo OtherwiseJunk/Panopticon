@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Panopticon.Contexts;
-using Panopticon.Services;
+using Panopticon.Data.Contexts;
+using Panopticon.Data.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,7 +15,10 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddSingleton<FeedbackService>().AddDbContext<FeedbackContext>();
+builder.Services.AddSingleton<FeedbackService>()
+                .AddSingleton<UserRecordService>();
+
+builder.Services.AddDbContext<PanopticonContext>();
 
 
 var app = builder.Build();

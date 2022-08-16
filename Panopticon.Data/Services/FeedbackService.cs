@@ -1,13 +1,19 @@
-﻿using Panopticon.Data.Contexts;
+﻿using Microsoft.EntityFrameworkCore;
+using Panopticon.Data.Contexts;
 using Panopticon.Shared.Models;
 
 namespace Panopticon.Data.Services
 {
     public class FeedbackService
     {
+        public IDbContextFactory<PanopticonContext> _contextFactory { get; set; }
+        public FeedbackService(IDbContextFactory<PanopticonContext> contextFactory)
+        {
+            _contextFactory = contextFactory;
+        }
         public List<Feedback> GetAllFeedback()
         {
-            using(FeedbackContext context = new FeedbackContext())
+            using(PanopticonContext context = _contextFactory.CreateDbContext())
             {
                 return context.Feedback.ToList();
             }
@@ -16,7 +22,7 @@ namespace Panopticon.Data.Services
         public async Task CreateFeedback(ulong userId, string message)
         {
             Console.WriteLine($"{Environment.GetEnvironmentVariable("DATABASE")}");
-            using (FeedbackContext context = new FeedbackContext())
+            using (PanopticonContext context = _contextFactory.CreateDbContext())
             {
                 context.Feedback.Add(new Feedback(userId, message));
                 await context.SaveChangesAsync();
@@ -25,7 +31,7 @@ namespace Panopticon.Data.Services
 
         public Feedback? GetFeedback(int id)
         {
-            using (FeedbackContext context = new FeedbackContext())
+            using (PanopticonContext context = _contextFactory.CreateDbContext())
             {
                 return context.Feedback.FirstOrDefault(f => f.Id == id);
             }
@@ -38,7 +44,7 @@ namespace Panopticon.Data.Services
 
         public void DeleteFeedback(Feedback feedback)
         {
-            using (FeedbackContext context = new FeedbackContext())
+            using (PanopticonContext context = _contextFactory.CreateDbContext())
             {
                 context.Feedback.Remove(feedback);
                 context.SaveChanges();

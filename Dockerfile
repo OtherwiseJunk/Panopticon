@@ -9,6 +9,10 @@ FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
 COPY ["Panopticon/Panopticon.csproj", "Panopticon/"]
 RUN dotnet restore "Panopticon/Panopticon.csproj"
+COPY ["Panopticon.Data/Panopticon.Data.csproj","Panopticon.Data/"]
+RUN dotnet restore "Panopticon.Data/Panopticon.Data.csproj"
+COPY ["Panopticon.Shared/Panopticon.Shared.csproj","Panopticon.Shared/"]
+RUN dotnet restore "Panopticon.Shared/Panopticon.Shared.csproj"
 COPY . .
 WORKDIR "/src/Panopticon"
 RUN dotnet build "Panopticon.csproj" -c Release -o /app/build

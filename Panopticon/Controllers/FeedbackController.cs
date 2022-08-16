@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Panopticon.Shared.Models;
-using Panopticon.Services;
+using Panopticon.Data.Services;
 
 namespace Panopticon.Controllers
 {
@@ -10,44 +10,58 @@ namespace Panopticon.Controllers
     [Route("/feedback")]
     public class FeedbackController : ControllerBase
     {
-        public FeedbackService _feedback { get; set; }
+        public FeedbackService _feedbackService { get; set; }
 
         public FeedbackController(FeedbackService feedback)
         {
-            _feedback = feedback;
+            _feedbackService = feedback;
         }
 
         [HttpGet(Name = "GetAllFeedback")]
-        public IEnumerable<Feedback> GetAllFeedback()
+        public ActionResult<List<Feedback>> GetAllFeedback()
         {
-            return _feedback.GetAllFeedback();
+            List<Feedback> feedback = _feedbackService.GetAllFeedback();
+
+            if(feedback.Count == 0)
+            {
+                return new NotFoundResult();
+            }
+
+            return feedback;
         }
 
         [HttpPost(Name = "CreateFeedback")]
         public async Task<IActionResult> CreateFeedback([FromQuery]ulong userId, [FromBody]string message)
         {
-            await _feedback.CreateFeedback(userId, message);
+            await _feedbackService.CreateFeedback(userId, message);
 
             return new NoContentResult();
         }
 
         [HttpGet("{id}", Name = "GetSpecificFeedback")]
-        public Feedback? GetFeedback([FromRoute] int id)
+        public ActionResult<Feedback> GetFeedback([FromRoute] int id)
         {
-            return _feedback.GetFeedback(id);
-        }
-
-        [HttpDelete("{id}", Name = "DeleteSpecificFeedback")]
-        public IActionResult DeleteFeedback([FromRoute] int id)
-        {
-            Feedback feedback = _feedback.GetFeedback(id);
+            Feedback? feedback = _feedbackService.GetFeedback(id);
 
             if (feedback == null)
             {
                 return new NotFoundResult();
             }
 
-            _feedback.DeleteFeedback(feedback);
+            return feedback;
+        }
+
+        [HttpDelete("{id}", Name = "DeleteSpecificFeedback")]
+        public IActionResult DeleteFeedback([FromRoute] int id)
+        {
+            Feedback feedback = _feedbackService.GetFeedback(id);
+
+            if (feedback == null)
+            {
+                return new NotFoundResult();
+            }
+
+            _feedbackService.DeleteFeedback(feedback);
 
             return new NoContentResult();
         }
