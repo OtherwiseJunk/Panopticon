@@ -20,8 +20,6 @@ builder.Services.AddSingleton<FeedbackService>().AddDbContext<FeedbackContext>()
 
 var app = builder.Build();
 
-ConfigureDatabase();
-
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -37,11 +35,3 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
-
-void ConfigureDatabase()
-{
-    using(FeedbackContext context = new FeedbackContext())
-    {
-        context.Database.EnsureCreated();
-    }
-}
