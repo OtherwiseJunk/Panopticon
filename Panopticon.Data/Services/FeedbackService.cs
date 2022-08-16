@@ -1,4 +1,4 @@
-﻿using Panopticon.Contexts;
+﻿using Panopticon.Data.Contexts;
 using Panopticon.Shared.Models;
 
 namespace Panopticon.Data.Services
