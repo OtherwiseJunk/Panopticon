@@ -24,8 +24,8 @@ jobs:
     - name: Test
       run: dotnet test --no-build --verbosity normal
     - name: Build Panopticon.Shared Nuget Package
-      run: dotnet pack
+      run: dotnet pack -p:Configuration=Release
       working-directory: Panopticon.Shared
     - name: Publish Panopticon.Shared NugetPackage
-      run: dotnet nuget push *.nupkg --api-key ${{secrets.NUGET_KEY}} --source https://api.nuget.org/v3/index.json
+      run: dotnet nuget push ./bin/Release/Panopticon*.nupkg --api-key ${{secrets.NUGET_KEY}} --source https://api.nuget.org/v3/index.json
       working-directory: Panopticon.Shared
