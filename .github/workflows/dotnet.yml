@@ -28,3 +28,4 @@ jobs:
       working-directory: Panopticon.Shared
     - name: Publish Panopticon.Shared NugetPackage
       run: dotnet nuget push *.nupkg --api-key ${{secrets.NUGET_KEY}} --source https://api.nuget.org/v3/index.json
+      working-directory: Panopticon.Shared
