@@ -18,7 +18,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<FeedbackService>()
                 .AddSingleton<UserRecordService>();
 
-builder.Services.AddDbContext<PanopticonContext>();
+builder.Services.AddDbContextFactory<PanopticonContext>();
 
 
 var app = builder.Build();
