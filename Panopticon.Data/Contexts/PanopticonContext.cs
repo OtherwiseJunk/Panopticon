@@ -9,8 +9,10 @@ namespace Panopticon.Data.Contexts
         {
 #if DEBUG
             optionsBuilder.UseSqlServer(Environment.GetEnvironmentVariable("TESTDATABASE"));
+            // TESTDATABASE
 #else
-            optionsBuilder.UseSqlServer(Environment.GetEnvironmentVariable("PANOPTICONDB"));
+            optionsBuilder.UseSqlServer(Environment.GetEnvironmentVariable("TESTDATABASE"));
+            // PANOPTICONDB
 #endif
         }
 

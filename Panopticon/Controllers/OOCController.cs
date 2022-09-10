@@ -18,7 +18,18 @@ namespace Panopticon.Controllers
         }
 
         [HttpGet]
-        public ActionResult<OOCItem> GetOOCItemByID([FromQuery] int id)
+        public ActionResult<List<OOCItem>> GetAllOOCItems()
+        {
+            List<OOCItem> items = _service.GetAllOOCItems();
+            if (items.Count != 0)
+            {
+                return items;
+            }
+            return new NotFoundResult();
+        }
+
+        [HttpGet("{id}")]
+        public ActionResult<OOCItem> GetOOCItemByID(int id)
         {
             OOCItem? item = _service.GetOOCItem(id);
             if (item != null)
@@ -28,8 +39,8 @@ namespace Panopticon.Controllers
             return new NotFoundResult();
         }
 
-        [HttpDelete]
-        public ActionResult<OOCItem> DeleteOOCItemByID([FromQuery] int id)
+        [HttpDelete("{id}")]
+        public ActionResult<OOCItem> DeleteOOCItemByID(int id)
         {
             OOCItem? item = _service.GetOOCItem(id);
             if (item != null)
@@ -41,11 +52,11 @@ namespace Panopticon.Controllers
         }
 
         [HttpPost]
-        public ActionResult CreateOOCItem([FromBody]OOCItem item)
+        public async Task<ActionResult> CreateOOCItem([FromBody]OOCItem item)
         {
             try
             {
-                _service.CreateOOCitem(item);
+                await _service.CreateOOCitem(item);
                 return new NoContentResult();
             }
             catch (Exception ex)
