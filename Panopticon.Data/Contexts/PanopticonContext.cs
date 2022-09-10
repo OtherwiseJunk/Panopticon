@@ -11,7 +11,7 @@ namespace Panopticon.Data.Contexts
             optionsBuilder.UseSqlServer(Environment.GetEnvironmentVariable("TESTDATABASE"));
             // TESTDATABASE
 #else
-            optionsBuilder.UseSqlServer(Environment.GetEnvironmentVariable("TESTDATABASE"));
+            optionsBuilder.UseSqlServer(Environment.GetEnvironmentVariable("PANOPTICONDB"));
             // PANOPTICONDB
 #endif
         }
