@@ -10,7 +10,7 @@ namespace Panopticon.Data.Contexts
 #if DEBUG
             optionsBuilder.UseSqlServer(Environment.GetEnvironmentVariable("TESTDATABASE"));
 #else
-            optionsBuilder.UseSqlServer(Environment.GetEnvironmentVariable("DATABASE"));
+            optionsBuilder.UseSqlServer(Environment.GetEnvironmentVariable("PANOPTICONDB"));
 #endif
         }
 
@@ -23,5 +23,6 @@ namespace Panopticon.Data.Contexts
 
         public DbSet<Feedback> Feedback { get; set; }
         public DbSet<UserRecord> UserRecords { get; set; }
-	}
+        public DbSet<OOCItem> OutOfContextItems { get; set; }
+    }
 }
