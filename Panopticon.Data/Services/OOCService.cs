@@ -7,6 +7,10 @@ namespace Panopticon.Data.Services
     public class OOCService
     {
         public IDbContextFactory<PanopticonContext> _contextFactory { get; set; }
+        public OOCService(IDbContextFactory<PanopticonContext> contextFactory)
+        {
+            _contextFactory = contextFactory;
+        }
         public OOCItem? GetRandomOOCItem()
         {
             using(PanopticonContext context = _contextFactory.CreateDbContext())
@@ -39,6 +43,7 @@ namespace Panopticon.Data.Services
         {
             using (PanopticonContext context = _contextFactory.CreateDbContext())
             {
+                item.DateStored = DateTime.Now;
                 context.OutOfContextItems.Add(item);
                 _ = context.SaveChangesAsync();
             }
@@ -49,7 +54,7 @@ namespace Panopticon.Data.Services
             using (PanopticonContext context = _contextFactory.CreateDbContext())
             {
                 context.OutOfContextItems.Remove(item);
-                context.SaveChanges();
+                _ = context.SaveChangesAsync();
             }
         }
     }
