@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Panopticon.Data.Contexts;
 using Panopticon.Data.Services;
+using Panopticon.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +21,8 @@ builder.Services.AddSingleton<FeedbackService>()
                 .AddSingleton<OOCService>();
 
 builder.Services.AddDbContextFactory<PanopticonContext>();
+
+builder.Services.AddHttpClient<FREDService>();
 
 
 var app = builder.Build();
