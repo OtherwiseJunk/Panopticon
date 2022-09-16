@@ -38,7 +38,14 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseCors(builder => builder.WithOrigins("*"));
 
 app.MapControllers();
 
 app.Run();
+
+/*options =>
+{
+    options.AddPolicy("AllowSpecificOrigin",
+        builder => builder.WithOrigins("*"));
+}*/
