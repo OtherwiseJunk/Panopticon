@@ -18,7 +18,16 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<FeedbackService>()
                 .AddSingleton<UserRecordService>()
-                .AddSingleton<OOCService>();
+                .AddSingleton<OOCService>()
+                .AddSingleton<FFMPEGService>()
+                .AddSingleton(
+                    new DOSpacesService(
+                        Environment.GetEnvironmentVariable("DOPUBLIC"),
+                        Environment.GetEnvironmentVariable("DOSECRET"),
+                        Environment.GetEnvironmentVariable("DOURL"),
+                        Environment.GetEnvironmentVariable("DOBUCKET")
+                    )
+                );
 
 builder.Services.AddDbContextFactory<PanopticonContext>();
 
