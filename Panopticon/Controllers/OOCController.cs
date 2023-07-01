@@ -75,6 +75,17 @@ namespace Panopticon.Controllers
                 return item;
             }
             return new NotFoundResult();
-        }        
+        }
+
+        [HttpGet("allUrl")]
+        public ActionResult<string[]> GetAllOccUrls()
+        {
+            List<OOCItem> items = _service.GetAllOOCItems();
+            if (items.Count != 0)
+            {
+                return items.Select((item) => item.ImageUrl).ToArray();
+            }
+            return new NotFoundResult();
+        }
     }
 }
