@@ -45,16 +45,16 @@ namespace Panopticon.Data.Services
             {
                 item.DateStored = DateTime.Now;
                 context.OutOfContextItems.Add(item);
-                _ = context.SaveChangesAsync();
+                _ = await context.SaveChangesAsync();
             }
         }
 
-        public void DeleteOOCItem(OOCItem item)
+        public async void DeleteOOCItem(OOCItem item)
         {
             using (PanopticonContext context = _contextFactory.CreateDbContext())
             {
                 context.OutOfContextItems.Remove(item);
-                _ = context.SaveChangesAsync();
+                _ = await context.SaveChangesAsync();
             }
         }
     }
