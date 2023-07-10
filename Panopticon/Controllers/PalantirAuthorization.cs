@@ -14,6 +14,7 @@ using Newtonsoft.Json.Linq;
 using System.Net.Http.Headers;
 using Discord.Rest;
 using Discord;
+using Discord.WebSocket;
 
 namespace Panopticon.Controllers
 {
@@ -27,10 +28,14 @@ namespace Panopticon.Controllers
         private string Auth0Audience { get; set; }
         private string Auth0GrantType { get; set; }
         private string Auth0Scope { get; set; }
-        private ulong[] DiscordGuildIds { get; set; } = new ulong[] { 698639095940907048 };
+        private string BotToken { get; set; }
+        private ulong[] DiscordGuildIds { get; set; }
+        private DiscordSocketClient _socketClient { get; set; }
+        private bool socketClientReady = false;
+        private JwtSecurityTokenHandler tokenHandler = new();
 
 
-        private static Dictionary<ulong, JwtSecurityToken> cachedTokens = new();
+        private static Dictionary<ulong, string> cachedTokens = new();
 
         public PalantirAuthorizationController(HttpClient httpClient)
         {
@@ -40,71 +45,80 @@ namespace Panopticon.Controllers
             Auth0Audience = Environment.GetEnvironmentVariable("AUTH0AUDIENCE");
             Auth0GrantType = Environment.GetEnvironmentVariable("AUTH0GRANTTYPE");
             Auth0Scope = Environment.GetEnvironmentVariable("AUTH0SCOPE");
+            BotToken = Environment.GetEnvironmentVariable("DEEPSTATE");
+
+            _socketClient = new(new DiscordSocketConfig { AlwaysDownloadUsers = true, GatewayIntents = GatewayIntents.All});
+            _socketClient.Ready += async () => { 
+                socketClientReady = true;
+                DiscordGuildIds = _socketClient.Guilds.Select(guild => guild.Id).ToArray();
+            };
+            _socketClient.LoginAsync(TokenType.Bot, BotToken).Wait();
+            _socketClient.StartAsync().Wait();
+            while (!socketClientReady) { Console.WriteLine("Waiting for client to be ready... Sleeping 500ms"); Thread.Sleep(500); }
         }
 
-        [HttpPost("/auth")]
+        [HttpPost("auth")]
         public async Task<ActionResult<string>> GetPanopticonToken([FromQuery] string accessToken)
-        {
+        {            
             using (DiscordRestClient client = new DiscordRestClient() )
             {
                 await client.LoginAsync(TokenType.Bearer, accessToken);
-                Dictionary<ulong, DiscordGuildPermissions> guildPermissions = new();
-                foreach (ulong guildId in DiscordGuildIds)
+                ulong userId = client.CurrentUser.Id;
+                if (cachedTokens.ContainsKey(userId) && tokenHandler.ReadJwtToken(cachedTokens[userId]).ValidTo > DateTime.UtcNow.AddMinutes(1))
                 {
-                    RestGuildUser user = await client.GetCurrentUserGuildMemberAsync(guildId);
-                    bool isAdmin = false;
-                    bool canDeleteMessages = false;
-                    foreach(ulong roleId in user.RoleIds)
-                    {
-                        RestRole role = client.GetGuildAsync(guildId).Result.GetRole(roleId);
-                        if (role.Permissions.Administrator)
-                        {
-                            isAdmin = true;
-                        }
-                        if (role.Permissions.ManageMessages)
-                        {
-                            canDeleteMessages = true;
-                        }
-                    }
-                    guildPermissions[guildId] = new DiscordGuildPermissions(isAdmin, canDeleteMessages);
+                    return cachedTokens[userId];
                 }
-                return RequestJWT(guildPermissions);
+                Dictionary<ulong, DiscordGuildPermissions> guildPermissions = new();
+                ulong[] usersGuildIds = client.GetGuildSummariesAsync().FlattenAsync().Result.Select(guild => guild.Id).Where(guildId => DiscordGuildIds.Contains(guildId)).ToArray();
+                foreach (ulong guildId in usersGuildIds)
+                {
+                    GuildPermissions userPerms = GetUserPermissions(guildId, userId);
+                    guildPermissions[guildId] = new DiscordGuildPermissions(userPerms.Administrator, userPerms.ManageMessages);
+                }
+                string jwt = RequestJWT(new PalantirDiscordData(client.CurrentUser.Username, guildPermissions));
+                cachedTokens[userId] = jwt;
+
+                return jwt;
             }
         }
 
-        /*private ulong[] GetUsersGuilds(string accessToken)
+        private GuildPermissions GetUserPermissions(ulong guildId, ulong id)
         {
-            using (HttpRequestMessage msg = new(HttpMethod.Get, "https://discord.com/api/v10/users/@me/guilds"))
-            {
-                msg.Headers.Authorization = new AuthenticationHeaderValue($"Bearer {accessToken}");
-            }
+            var user = _socketClient.Guilds.Where(guild => guild.Id == guildId).First().GetUser(id);
+            return user.GuildPermissions;
         }
 
-        private DiscordGuildPermissions GetUsersGuildPermissions(string accessToken)
+        private async Task<List<GuildPermissions>> GetRolePermissions(ulong[] roles, ulong guildId)
         {
-            using (HttpRequestMessage msg = new(HttpMethod.Get, "https://discord.com/api/v10"))
+            List<GuildPermissions> permissions = new();            
+            IGuild guild = _socketClient.GetGuild(guildId);
+            foreach (ulong roleId in roles)
             {
-                msg.Headers.Authorization = new AuthenticationHeaderValue($"Bearer {accessToken}");
+                var userPerms = guild.GetRole(roleId).Permissions;
+                permissions.Add(userPerms);
             }
-        }*/
+            return permissions;
+        }
 
-        private string RequestJWT(Dictionary<ulong, DiscordGuildPermissions> userPermissionsByGuildId)
+        private string RequestJWT(PalantirDiscordData palantirDiscordData)
         {
-            string userPermissionsJson = JsonSerializer.Serialize(userPermissionsByGuildId);
+            string palantirDiscordDataJson = JsonSerializer.Serialize(palantirDiscordData);
             JwtSecurityTokenHandler tokenHandler = new();
 
             using (HttpRequestMessage msg = new(HttpMethod.Post, "https://dev-apsgkx34.us.auth0.com/oauth/token"))
             {
                 msg.Headers.Add("Accept", MediaTypeNames.Application.Json);
-                msg.Content = new StringContent($"{{\"client_id\":\"{Auth0ClientId}\",\"client_secret\":\"{Auth0ClientSecret}\",\"audience\":\"{Auth0Audience}\",\"grant_type\":\"{Auth0GrantType}\",\"scope\":\"{Auth0Scope}\",\"userPermissions\":\"{userPermissionsJson}\"}}",
-                Encoding.UTF8,
-                                    "application/json");
+                Auth0RequestBody body = new(Auth0ClientId, Auth0ClientSecret, Auth0Audience, Auth0GrantType, Auth0Scope, palantirDiscordDataJson);
+                string jsonJWTRequest = JsonSerializer.Serialize(body);
+                msg.Content = new StringContent(jsonJWTRequest, Encoding.UTF8,"application/json");
 
                 using (HttpResponseMessage resp = _httpClient.SendAsync(msg).Result)
                 {
-                    string jsonToken = JsonSerializer.Deserialize<JsonNode>(resp.Content.ReadAsStringAsync().Result)["access_token"].GetValue<string>();
-                    tokenHandler.ReadJwtToken(jsonToken);
-                    return jsonToken;
+                    if (resp.IsSuccessStatusCode)
+                    {
+                        return JsonSerializer.Deserialize<JsonNode>(resp.Content.ReadAsStringAsync().Result)["access_token"].GetValue<string>();
+                    }
+                    return null;
                 }
             }
         }

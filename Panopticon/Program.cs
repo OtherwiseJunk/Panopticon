@@ -49,7 +49,12 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseCors(builder => builder.WithOrigins("*"));
+app.UseCors(builder =>
+{
+    builder.WithOrigins("*");
+    builder.WithHeaders("Origin, X-Requested-With, Content-Type, Accept");
+}
+) ;
 
 app.MapControllers();
 
