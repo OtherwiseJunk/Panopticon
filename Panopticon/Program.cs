@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Panopticon.Controllers;
 using Panopticon.Data.Contexts;
 using Panopticon.Data.Services;
 using Panopticon.Services;
@@ -28,10 +29,11 @@ builder.Services.AddSingleton<FeedbackService>()
                         Environment.GetEnvironmentVariable("DOBUCKET")
                     )
                 );
-
+builder.Services.AddLogging();
 builder.Services.AddDbContextFactory<PanopticonContext>();
 
 builder.Services.AddHttpClient<FREDService>();
+builder.Services.AddHttpClient<PalantirAuthorizationController>();
 
 
 var app = builder.Build();
@@ -47,7 +49,12 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseCors(builder => builder.WithOrigins("*"));
+app.UseCors(builder =>
+{
+    builder.WithOrigins("*");
+    builder.WithHeaders("Origin, X-Requested-With, Content-Type, Accept");
+}
+) ;
 
 app.MapControllers();
 
