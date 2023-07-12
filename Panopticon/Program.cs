@@ -13,6 +13,21 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
 {
     options.Authority = "https://dev-apsgkx34.us.auth0.com/";
     options.Audience = "https://panopticon.cacheblasters.com";
+
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = (context) =>
+        {
+            string? token = context.Request.Cookies["X-Access-Token"];
+            if (token is not null)
+            {
+                context.Token = token;
+            }
+
+            return Task.CompletedTask;
+        }
+    };
+
 });
 
 _socketClient = new(new DiscordSocketConfig { AlwaysDownloadUsers = true, GatewayIntents = GatewayIntents.All });

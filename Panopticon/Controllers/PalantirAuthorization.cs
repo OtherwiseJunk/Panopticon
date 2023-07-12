@@ -1,20 +1,13 @@
 ﻿
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Panopticon.Models;
 using Panopticon.Services;
-using System.IdentityModel.Tokens.Jwt;
-using System.Net.Http;
-using System.Net.Mime;
-using System.Text.Json.Nodes;
-using System.Text;
-using System.Text.Json;
-using Newtonsoft.Json.Linq;
-using System.Net.Http.Headers;
+using System.Web;
 using Discord.Rest;
 using Discord;
-using Discord.WebSocket;
+using Newtonsoft.Json.Linq;
+using System.Text.Json;
 
 namespace Panopticon.Controllers
 {
@@ -37,7 +30,7 @@ namespace Panopticon.Controllers
         }
 
         [HttpPost("auth")]
-        public async Task<ActionResult<string>> GetPanopticonToken([FromQuery] string accessToken)
+        public async Task<IActionResult> GetPanopticonToken([FromQuery] string accessToken)
         {            
             using (DiscordRestClient client = await _discord.GetUserClient(accessToken))
             {
@@ -52,17 +45,39 @@ namespace Panopticon.Controllers
                     // Discord user is not in any servers with the bot; 403 forbidden
                     return StatusCode(403, NoCommonServersError);
                 }
-                
-                string? jwt = _token.RequestPalantirTokenWithDiscordData(new PalantirDiscordData(client.CurrentUser.Username, guildPermissions), client.CurrentUser.Id);
+
+                PalantirDiscordData data = new PalantirDiscordData(client.CurrentUser.Username, guildPermissions);
+                string? jwt = _token.RequestPalantirTokenWithDiscordData(data, client.CurrentUser.Id);
 
                 if (jwt is null)
-                {
+                {                    
                     // Failed to get panopticon access token; 401 unauthoirzed
                     return StatusCode(401, PanopticonAuthenticationFailedError);
                 }
 
-                return jwt;
+                Response.Cookies.Append("X-Access-Token", jwt, new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict, Secure = true });
+
+                return new JsonResult(data);
             }
+        }
+
+        [HttpGet("authCheck")]
+        [Authorize]
+        public IActionResult ReturnSuccess()
+        {
+            Request.Cookies.TryGetValue("X-Access-Token", out string? token);
+            if(token is null)
+            {
+                return new UnauthorizedResult();
+            }
+
+            PalantirDiscordData? data = _token.GetDiscordDataFromToken(token);
+            if(data is null)
+            {
+                return new UnauthorizedResult();
+            }
+
+            return new JsonResult(data);
         }
     }
 }

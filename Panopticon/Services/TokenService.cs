@@ -30,18 +30,28 @@ namespace Panopticon.Services
             Auth0Scope = Environment.GetEnvironmentVariable("AUTH0SCOPE")!;
         }
 
+        public PalantirDiscordData? GetDiscordDataFromToken(string token)
+        {
+            JwtSecurityToken jwt = tokenHandler.ReadJwtToken(token);
+
+            string palantirDiscordDataJSON = jwt.Claims.Where(claim => claim.Type == "https://panopticon.cacheblasters.com/palantirDiscordData").First().Value;
+            if(palantirDiscordDataJSON is not null)
+            {
+                return JsonSerializer.Deserialize<PalantirDiscordData>(palantirDiscordDataJSON)!;
+            }
+            return null;
+        }
         public string? RequestPalantirTokenWithDiscordData(PalantirDiscordData palantirDiscordData, ulong userId)
         {
             if (cachedTokens.ContainsKey(userId) && tokenHandler.ReadJwtToken(cachedTokens[userId]).ValidTo > DateTime.UtcNow.AddMinutes(1))
             {
                 return cachedTokens[userId];
             }
-            string palantirDiscordDataJson = JsonSerializer.Serialize(palantirDiscordData);
 
             using (HttpRequestMessage msg = new(HttpMethod.Post, "https://dev-apsgkx34.us.auth0.com/oauth/token"))
             {
                 msg.Headers.Add("Accept", MediaTypeNames.Application.Json);
-                Auth0RequestBody body = new(Auth0ClientId, Auth0ClientSecret, Auth0Audience, Auth0GrantType, Auth0Scope, palantirDiscordDataJson);
+                Auth0RequestBody body = new(Auth0ClientId, Auth0ClientSecret, Auth0Audience, Auth0GrantType, Auth0Scope, palantirDiscordData);
                 string jsonJWTRequest = JsonSerializer.Serialize(body);
                 msg.Content = new StringContent(jsonJWTRequest, Encoding.UTF8, "application/json");
 
