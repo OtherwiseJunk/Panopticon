@@ -55,7 +55,7 @@ namespace Panopticon.Controllers
                     return StatusCode(401, PanopticonAuthenticationFailedError);
                 }
 
-                Response.Cookies.Append("X-Access-Token", jwt, new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict, Secure = true });
+                Response.Cookies.Append("X-Access-Token", jwt, new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict, Secure = true, Expires = DateTime.Now.AddDays(30) });
 
                 return new JsonResult(data);
             }
