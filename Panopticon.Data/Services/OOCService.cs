@@ -1,19 +1,17 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Panopticon.Data.Contexts;
+using Panopticon.Data.Interfaces;
 using Panopticon.Shared.Models;
 
 namespace Panopticon.Data.Services
 {
-    public class OOCService
+    public class OocService(IDbContextFactory<PanopticonContext> contextFactory) : IOocService
     {
-        public IDbContextFactory<PanopticonContext> _contextFactory { get; set; }
-        public OOCService(IDbContextFactory<PanopticonContext> contextFactory)
+        public IDbContextFactory<PanopticonContext> ContextFactory { get; set; } = contextFactory;
+
+        public OOCItem? GetRandomOocItem()
         {
-            _contextFactory = contextFactory;
-        }
-        public OOCItem? GetRandomOOCItem()
-        {
-            using(PanopticonContext context = _contextFactory.CreateDbContext())
+            using(PanopticonContext context = ContextFactory.CreateDbContext())
             {
                 if(context.OutOfContextItems.Count() > 0)
                 {
@@ -23,25 +21,25 @@ namespace Panopticon.Data.Services
             }
         }
 
-        public OOCItem? GetOOCItem(int id)
+        public OOCItem? GetOocItem(int id)
         {
-            using (PanopticonContext context = _contextFactory.CreateDbContext())
+            using (PanopticonContext context = ContextFactory.CreateDbContext())
             {
                 return context.OutOfContextItems.FirstOrDefault(ooc => ooc.ItemID == id);
             }
         }
 
-        public List<OOCItem> GetAllOOCItems()
+        public List<OOCItem> GetAllOocItems()
         {
-            using (PanopticonContext context = _contextFactory.CreateDbContext())
+            using (PanopticonContext context = ContextFactory.CreateDbContext())
             {
                 return context.OutOfContextItems.ToList();
             }
         }
 
-        public async Task CreateOOCitem(OOCItem item)
+        public async Task CreateOocItem(OOCItem item)
         {
-            using (PanopticonContext context = _contextFactory.CreateDbContext())
+            using (PanopticonContext context = ContextFactory.CreateDbContext())
             {
                 item.DateStored = DateTime.Now;
                 context.OutOfContextItems.Add(item);
@@ -49,9 +47,9 @@ namespace Panopticon.Data.Services
             }
         }
 
-        public async void DeleteOOCItem(OOCItem item)
+        public async Task DeleteOocItem(OOCItem item)
         {
-            using (PanopticonContext context = _contextFactory.CreateDbContext())
+            using (PanopticonContext context = ContextFactory.CreateDbContext())
             {
                 context.OutOfContextItems.Remove(item);
                 _ = await context.SaveChangesAsync();

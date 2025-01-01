@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Panopticon.Data.Interfaces;
 using Panopticon.Data.Services;
 using Panopticon.Shared.Models;
 
@@ -10,9 +11,9 @@ namespace Panopticon.Controllers
     [Route("/ooc")]
     public class OOCController : ControllerBase
     {
-        OOCService _service { get; set; }
+        IOocService _service { get; set; }
 
-        public OOCController(OOCService service)
+        public OOCController(IOocService service)
         {
             _service = service;
         }
@@ -20,7 +21,7 @@ namespace Panopticon.Controllers
         [HttpGet]
         public ActionResult<List<OOCItem>> GetAllOOCItems()
         {
-            List<OOCItem> items = _service.GetAllOOCItems();
+            List<OOCItem> items = _service.GetAllOocItems();
             if (items.Count != 0)
             {
                 return items;
@@ -31,7 +32,7 @@ namespace Panopticon.Controllers
         [HttpGet("{id}")]
         public ActionResult<OOCItem> GetOOCItemByID(int id)
         {
-            OOCItem? item = _service.GetOOCItem(id);
+            OOCItem? item = _service.GetOocItem(id);
             if (item != null)
             {
                 return item;
@@ -42,10 +43,10 @@ namespace Panopticon.Controllers
         [HttpDelete("{id}")]
         public ActionResult<OOCItem> DeleteOOCItemByID(int id)
         {
-            OOCItem? item = _service.GetOOCItem(id);
+            OOCItem? item = _service.GetOocItem(id);
             if (item != null)
             {
-                _service.DeleteOOCItem(item);
+                _service.DeleteOocItem(item);
                 return new NoContentResult();
             }
             return new NotFoundResult();
@@ -56,7 +57,7 @@ namespace Panopticon.Controllers
         {
             try
             {
-                await _service.CreateOOCitem(item);
+                await _service.CreateOocItem(item);
                 return new NoContentResult();
             }
             catch (Exception ex)
@@ -69,7 +70,7 @@ namespace Panopticon.Controllers
         [HttpGet("rand")]
         public ActionResult<OOCItem> GetRandomOOCItem()
         {
-            OOCItem? item = _service.GetRandomOOCItem();
+            OOCItem? item = _service.GetRandomOocItem();
             if(item != null)
             {
                 return item;
@@ -80,7 +81,7 @@ namespace Panopticon.Controllers
         [HttpGet("allUrl")]
         public ActionResult<string[]> GetAllOccUrls()
         {
-            List<OOCItem> items = _service.GetAllOOCItems();
+            List<OOCItem> items = _service.GetAllOocItems();
             if (items.Count != 0)
             {
                 return items.Select((item) => item.ImageUrl).ToArray();
