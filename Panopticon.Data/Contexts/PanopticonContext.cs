@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Panopticon.Shared.Models;
+using Panopticon.Shared.Models.Core;
 
 namespace Panopticon.Data.Contexts
 {
@@ -26,5 +27,6 @@ namespace Panopticon.Data.Contexts
         public DbSet<Feedback> Feedback { get; set; }
         public DbSet<UserRecord> UserRecords { get; set; }
         public DbSet<OOCItem> OutOfContextItems { get; set; }
+        public DbSet<ApiKey> ApiKeys { get; set; }
     }
 }

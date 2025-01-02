@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Panopticon.Controllers;
 using Panopticon.Data.Contexts;
 using Panopticon.Data.Services;
+using Panopticon.Middleware;
 using Panopticon.Services;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -77,6 +78,8 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseCors(builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+app.UseWhen(context => context.Request.Path.StartsWithSegments("/libcoin"), 
+    builder => builder.UseMiddleware<ApiKeyMiddleware>());
 
 app.MapControllers();
 
