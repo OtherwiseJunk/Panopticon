@@ -40,5 +40,23 @@ namespace Panopticon.Services
 
             return observations;
         }
+
+        public async Task<List<SahmRuleObservation>> CalculateLatestCanadianSahmRule()
+        {
+            string query = $"https://api.stlouisfed.org/fred/series/observations?series_id=LRUNTTTTCAM156S&api_key={FREDApiKey}&file_type=json";
+
+            using (HttpRequestMessage req = new HttpRequestMessage(HttpMethod.Get, query))
+            {
+                using (HttpResponseMessage resp = await _client.SendAsync(req))
+                {
+                    
+                }
+            }
+        }
+
+        private double CalculateThreeMonthAverage()
+        {
+            return 0.0;
+        }
     }
 }
