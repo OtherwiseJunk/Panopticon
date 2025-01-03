@@ -3,9 +3,10 @@ using Panopticon.Enums;
 
 namespace Panopticon.Models.Core;
 
-public class APITransaction
+public class ApiTransaction
 {
     [Key]
     public ulong Id { get; set; }
+    public string ApiKey { get; set; }
     public ApiTransactionType Type { get; set; }
 }
