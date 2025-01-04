@@ -1,7 +1,7 @@
 ﻿namespace Panopticon.Enums;
 
 [Flags]
-public enum ApiPermissions
+public enum ApiPermission
 {
     LibcoinRead = 1 << 0,
     LibcoinSend = 1 << 1, // API is allowed to send Libcoin from their account.

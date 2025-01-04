@@ -11,12 +11,6 @@ namespace Panopticon.Data.Services;
 
 public class LibcoinService(PanopticonContext context, ILogger<LibcoinService> logger) : ILibcoinService
 {
-    private void CreateApiTransaction(ApiTransaction transaction)
-    {
-        context.ApiTransactions.Add(transaction);
-        context.SaveChanges();
-    }
-
     public void CreateLibcoinTransaction(LibcoinTransaction transaction)
     {
         context.LibcoinTransactions.Add(transaction);
@@ -107,12 +101,6 @@ public class LibcoinService(PanopticonContext context, ILogger<LibcoinService> l
             catch
             {
                 transactionType = LibcoinTransactionType.ApiTransaction;
-                var authorizingKey = senderUlong == 0 ? senderId : receiverId;
-                CreateApiTransaction(new ApiTransaction
-                {
-                    ApiKey = authorizingKey,
-                    Type = ApiTransactionType.Libcoin,
-                });
             }
 
             CreateLibcoinTransaction(new LibcoinTransaction
@@ -163,11 +151,6 @@ public class LibcoinService(PanopticonContext context, ILogger<LibcoinService> l
                 TransactionMessage = message,
                 TransactionType = LibcoinTransactionType.AdminTransaction,
                 TransactionDate = DateTime.Now
-            });
-            CreateApiTransaction(new ApiTransaction
-            {
-                ApiKey = authorizingKey,
-                Type = ApiTransactionType.Libcoin,
             });
         }
         catch (Exception ex)

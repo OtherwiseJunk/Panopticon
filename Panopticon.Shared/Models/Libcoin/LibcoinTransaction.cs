@@ -1,9 +1,12 @@
-﻿using Panopticon.Enums;
+﻿using System.ComponentModel.DataAnnotations;
+using Panopticon.Enums;
 
 namespace Panopticon.Models.Libcoin;
 
 public class LibcoinTransaction
 {
+    [Key]
+    public ulong Id { get; set; }
     public string SendingUser { get; set; }
     public string ReceivingUser { get; set; }
     public double Amount { get; set; }

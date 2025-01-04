@@ -1,12 +1,13 @@
 ﻿using System.Net;
 using Panopticon.Data.Contexts;
+using Panopticon.Data.Interfaces;
 
 namespace Panopticon.Middleware;
 
-public class ApiKeyMiddleware(RequestDelegate next, PanopticonContext context)
+public class ApiKeyMiddleware(RequestDelegate next, IApiKeyService apiKeyService)
 {
     private readonly RequestDelegate _next = next;
-    private readonly PanopticonContext _context = context;
+    private readonly IApiKeyService _apiKeyService = apiKeyService;
     
     public async Task InvokeAsync(HttpContext context)
     {
@@ -17,7 +18,7 @@ public class ApiKeyMiddleware(RequestDelegate next, PanopticonContext context)
             return;
         }
 
-        var apiKey = _context.ApiKeys.SingleOrDefault(x => x.Key == extractedApiKey);
+        var apiKey = _apiKeyService.TryGetApiKey(extractedApiKey!);
 
         if (apiKey == null)
         {
