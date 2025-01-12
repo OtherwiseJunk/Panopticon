@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Panopticon.Data.Contexts;
 using Panopticon.Data.Interfaces;
@@ -7,10 +8,11 @@ using Panopticon.Shared.Models.Core;
 
 namespace Panopticon.Data.Services;
 
-public class ApiKeyService(PanopticonContext context, ILogger<ApiKeyService> logger) : IApiKeyService
+public class ApiKeyService(IDbContextFactory<PanopticonContext> contextFactory, ILogger<ApiKeyService> logger) : IApiKeyService
 {
     public ApiKey? TryGetApiKey(string apiKey)
     {
+        using PanopticonContext context = contextFactory.CreateDbContext();
         return context.ApiKeys.FirstOrDefault(k => k.Key == apiKey);
     }
 
@@ -53,12 +55,14 @@ public class ApiKeyService(PanopticonContext context, ILogger<ApiKeyService> log
 
     public void CreateApiTransaction(ApiTransaction transaction)
     {
+        using PanopticonContext context = contextFactory.CreateDbContext();
         context.ApiTransactions.Add(transaction);
         context.SaveChanges();
     }
-    
+
     public void CreateApiKey(ApiKey apiKey)
     {
+        using PanopticonContext context = contextFactory.CreateDbContext();
         context.ApiKeys.Add(apiKey);
         context.SaveChanges();
     }

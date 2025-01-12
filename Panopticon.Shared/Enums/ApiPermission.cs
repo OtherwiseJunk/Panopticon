@@ -8,4 +8,5 @@ public enum ApiPermission
     LibcoinSend = 1 << 2, // API is allowed to send Libcoin from their account to other accounts.
     LibcoinGrant = 1 << 3, // API is allowed to create Libcoin directly into user accounts.
     LibcoinDeduct = 1 << 4, // API is allowed to deduct Libcoin from user accounts.
+    LibcoinBroker = 1 << 5, // API is allowed to send Libcoin from one account to another.
 }

@@ -3,6 +3,7 @@ using Discord;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Panopticon.Controllers;
 using Panopticon.Data.Contexts;
+using Panopticon.Data.Interfaces;
 using Panopticon.Data.Services;
 using Panopticon.Middleware;
 using Panopticon.Services;
@@ -48,6 +49,8 @@ builder.Services.AddSingleton<FeedbackService>()
                 .AddSingleton<FFMPEGService>()
                 .AddSingleton<DiscordService>()
                 .AddSingleton<TokenService>()
+                .AddSingleton<IApiKeyService, ApiKeyService>()
+                .AddSingleton<ILibcoinService, LibcoinService>()
                 .AddSingleton(
                     new DOSpacesService(
                         Environment.GetEnvironmentVariable("DOPUBLIC"),

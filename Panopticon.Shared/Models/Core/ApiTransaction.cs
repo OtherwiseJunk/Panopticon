@@ -9,4 +9,5 @@ public class ApiTransaction
     public ulong Id { get; set; }
     public string ApiKey { get; set; }
     public ApiTransactionType Type { get; set; }
+    public string TransactionData { get; set; }
 }

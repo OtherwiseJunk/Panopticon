@@ -9,16 +9,18 @@ using System;
 
 namespace Panopticon.Data.Services;
 
-public class LibcoinService(PanopticonContext context, ILogger<LibcoinService> logger) : ILibcoinService
+public class LibcoinService(IDbContextFactory<PanopticonContext> contextFactory, ILogger<LibcoinService> logger) : ILibcoinService
 {
     public void CreateLibcoinTransaction(LibcoinTransaction transaction)
     {
+        using PanopticonContext context = contextFactory.CreateDbContext();
         context.LibcoinTransactions.Add(transaction);
         context.SaveChanges();
     }
 
     public List<LibcoinTransaction> GetAllLibcoinTransactionsForUser(string userId)
     {
+        using PanopticonContext context = contextFactory.CreateDbContext();
         return context.LibcoinTransactions
             .Where(t => t.SendingUser == userId || t.ReceivingUser == userId)
             .ToList();
@@ -26,11 +28,13 @@ public class LibcoinService(PanopticonContext context, ILogger<LibcoinService> l
 
     public List<LibcoinTransaction> GetAllLibcoinTransactions()
     {
+        using PanopticonContext context = contextFactory.CreateDbContext();
         return context.LibcoinTransactions.ToList();
     }
 
     public List<LibcoinTransaction> GetReceivedLibcoinTransactionsForUser(string userId)
     {
+        using PanopticonContext context = contextFactory.CreateDbContext();
         return context.LibcoinTransactions
             .Where(t => t.ReceivingUser == userId)
             .ToList();
@@ -38,6 +42,7 @@ public class LibcoinService(PanopticonContext context, ILogger<LibcoinService> l
 
     public List<LibcoinTransaction> GetSentLibcoinTransactionsForUser(string userId)
     {
+        using PanopticonContext context = contextFactory.CreateDbContext();
         return context.LibcoinTransactions
             .Where(t => t.SendingUser == userId)
             .ToList();
@@ -45,6 +50,7 @@ public class LibcoinService(PanopticonContext context, ILogger<LibcoinService> l
 
     public double GetLibcoinBalance(string userId)
     {
+        using PanopticonContext context = contextFactory.CreateDbContext();
         var balance = context.LibcoinUserBalances
             .FirstOrDefault(b => b.UserId == userId);
         return balance?.Balance ?? 0;
@@ -52,11 +58,13 @@ public class LibcoinService(PanopticonContext context, ILogger<LibcoinService> l
 
     public List<LibcoinUserBalance> GetAllLibcoinBalances()
     {
+        using PanopticonContext context = contextFactory.CreateDbContext();
         return context.LibcoinUserBalances.ToList();
     }
 
-    public void SendLibcoin(string senderId, string receiverId, double amount, string message)
+    public void SendLibcoin(string senderId, string receiverId, double amount, string? message)
     {
+        using PanopticonContext context = contextFactory.CreateDbContext();
         using var transaction = context.Database.BeginTransaction();
         try
         {
@@ -70,12 +78,7 @@ public class LibcoinService(PanopticonContext context, ILogger<LibcoinService> l
 
             if (receiverBalance == null)
             {
-                receiverBalance = new LibcoinUserBalance
-                {
-                    UserId = receiverId,
-                    Balance = 0
-                };
-                context.LibcoinUserBalances.Add(receiverBalance);
+                receiverBalance = CreateNewLibcoinUserBalance(receiverId);
             }
 
             if (senderBalance.Balance < amount)
@@ -122,9 +125,23 @@ public class LibcoinService(PanopticonContext context, ILogger<LibcoinService> l
             throw;
         }
     }
+    
+    private LibcoinUserBalance CreateNewLibcoinUserBalance(string userId)
+    {
+        var context = contextFactory.CreateDbContext();
+        context.LibcoinUserBalances.Add(new LibcoinUserBalance
+        {
+            UserId = userId,
+            Balance = 0
+        });
+        context.SaveChanges();
+        
+        return context.LibcoinUserBalances.First(b => b.UserId == userId);
+    }
 
     public void GrantLibcoin(string userId, double amount, string authorizingKey, string message)
     {
+        using PanopticonContext context = contextFactory.CreateDbContext();
         using var transaction = context.Database.BeginTransaction();
         try
         {
@@ -138,6 +155,7 @@ public class LibcoinService(PanopticonContext context, ILogger<LibcoinService> l
                     Balance = 0
                 };
                 context.LibcoinUserBalances.Add(receiverBalance);
+                context.SaveChanges();
             }
 
             receiverBalance.Balance += amount;
@@ -152,6 +170,9 @@ public class LibcoinService(PanopticonContext context, ILogger<LibcoinService> l
                 TransactionType = LibcoinTransactionType.AdminTransaction,
                 TransactionDate = DateTime.Now
             });
+            
+            context.SaveChanges();
+            transaction.Commit();
         }
         catch (Exception ex)
         {
