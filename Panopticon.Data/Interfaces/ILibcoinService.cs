@@ -13,4 +13,5 @@ public interface ILibcoinService
     public List<LibcoinUserBalance> GetAllLibcoinBalances();
     public void SendLibcoin(string senderId, string receiverId, double amount, string message);
     public void GrantLibcoin(string userId, double amount, string authorizingKey, string message);
+    public void DeductLibcoin(string userId, double amount, string authorizingKey, string message);
 }

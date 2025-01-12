@@ -181,4 +181,50 @@ public class LibcoinService(IDbContextFactory<PanopticonContext> contextFactory,
             throw;
         }
     }
+
+    public void DeductLibcoin(string userId, double amount, string authorizingKey, string message)
+    {
+        using PanopticonContext context = contextFactory.CreateDbContext();
+        using var transaction = context.Database.BeginTransaction();
+        try
+        {
+            var receiverBalance = context.LibcoinUserBalances.FirstOrDefault(b => b.UserId == userId);
+
+            if (receiverBalance == null)
+            {
+                throw new Exception("Deduct target not found");
+            }
+
+
+            if (receiverBalance.Balance < amount)
+            {
+                receiverBalance.Balance = 0;
+            }
+            else
+            {
+                receiverBalance.Balance -= amount;    
+            }
+            
+            context.LibcoinUserBalances.Update(receiverBalance);
+
+            CreateLibcoinTransaction(new LibcoinTransaction
+            {
+                SendingUser = authorizingKey,
+                ReceivingUser = userId,
+                Amount = amount,
+                TransactionMessage = message,
+                TransactionType = LibcoinTransactionType.AdminTransaction,
+                TransactionDate = DateTime.Now
+            });
+            
+            context.SaveChanges();
+            transaction.Commit();
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error processing Libcoin deduct");
+            transaction.Rollback();
+            throw;
+        }
+    }
 }

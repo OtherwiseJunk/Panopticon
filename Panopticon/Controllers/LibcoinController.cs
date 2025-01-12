@@ -20,33 +20,6 @@ public class LibcoinController(IApiKeyService apiKeyService, ILibcoinService lib
         double balance = _libcoinService.GetLibcoinBalance(userId);
         return Ok(balance);
     }
-    
-    [HttpPost("grant")]
-    public IActionResult GrantLibcoin([FromBody] GrantLibcoinRequest request)
-    {
-        var apiKey = Request.Headers["ApiKey"];
-        if (!_apiKeyService.HasPermission(apiKey!, ApiPermission.LibcoinGrant))
-        {
-            return Unauthorized();
-        }
-
-        try
-        {
-            _libcoinService.GrantLibcoin(request.UserId, request.Amount, apiKey!, request.Message);
-            _apiKeyService.CreateApiTransaction(new ApiTransaction
-            {
-                ApiKey = apiKey!,
-                Type = ApiTransactionType.Libcoin,
-                TransactionData = JsonSerializer.Serialize(request)
-            });   
-        }
-        catch (Exception e)
-        {
-            return BadRequest(e.Message);
-        }
-        
-        return Ok();
-    }
 
     [HttpGet("transactions")]
     public IActionResult GetAllLibcoinTransactions(int pageNumber = 1, int pageSize = 10)
@@ -136,6 +109,58 @@ public class LibcoinController(IApiKeyService apiKeyService, ILibcoinService lib
         {
             return BadRequest(e.Message);
         }
+    }
+    [HttpPost("grant")]
+    public IActionResult GrantLibcoin([FromBody] GrantLibcoinRequest request)
+    {
+        var apiKey = Request.Headers["ApiKey"];
+        if (!_apiKeyService.HasPermission(apiKey!, ApiPermission.LibcoinGrant))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            _libcoinService.GrantLibcoin(request.UserId, request.Amount, apiKey!, request.Message);
+            _apiKeyService.CreateApiTransaction(new ApiTransaction
+            {
+                ApiKey = apiKey!,
+                Type = ApiTransactionType.Libcoin,
+                TransactionData = JsonSerializer.Serialize(request)
+            });   
+        }
+        catch (Exception e)
+        {
+            return BadRequest(e.Message);
+        }
+        
+        return Ok();
+    }
+    [HttpPost("deduct")]
+    public IActionResult DeductLibcoin([FromBody] DeductLibcoinRequest request)
+    {
+        var apiKey = Request.Headers["ApiKey"];
+        if (!_apiKeyService.HasPermission(apiKey!, ApiPermission.LibcoinDeduct))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            _libcoinService.DeductLibcoin(request.UserId, request.Amount, apiKey!, request.Message);
+            _apiKeyService.CreateApiTransaction(new ApiTransaction
+            {
+                ApiKey = apiKey!,
+                Type = ApiTransactionType.Libcoin,
+                TransactionData = JsonSerializer.Serialize(request)
+            });   
+        }
+        catch (Exception e)
+        {
+            return BadRequest(e.Message);
+        }
+        
+        return Ok();
     }
     
 
