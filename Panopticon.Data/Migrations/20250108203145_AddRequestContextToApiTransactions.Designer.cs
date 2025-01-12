@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Panopticon.Data.Contexts;
 
@@ -11,9 +12,11 @@ using Panopticon.Data.Contexts;
 namespace Panopticon.Data.Migrations
 {
     [DbContext(typeof(PanopticonContext))]
-    partial class PanopticonContextModelSnapshot : ModelSnapshot
+    [Migration("20250108203145_AddRequestContextToApiTransactions")]
+    partial class AddRequestContextToApiTransactions
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

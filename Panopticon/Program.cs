@@ -3,8 +3,12 @@ using Discord;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Panopticon.Controllers;
 using Panopticon.Data.Contexts;
+using Panopticon.Data.Interfaces;
 using Panopticon.Data.Services;
+using Panopticon.Enums;
+using Panopticon.Middleware;
 using Panopticon.Services;
+using Panopticon.Shared.Models.Core;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 DiscordSocketClient _socketClient;
@@ -43,10 +47,12 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<FeedbackService>()
                 .AddSingleton<UserRecordService>()
-                .AddSingleton<OOCService>()
+                .AddSingleton<OocService>()
                 .AddSingleton<FFMPEGService>()
                 .AddSingleton<DiscordService>()
                 .AddSingleton<TokenService>()
+                .AddSingleton<IApiKeyService, ApiKeyService>()
+                .AddSingleton<ILibcoinService, LibcoinService>()
                 .AddSingleton(
                     new DOSpacesService(
                         Environment.GetEnvironmentVariable("DOPUBLIC"),
@@ -77,6 +83,8 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseCors(builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+app.UseWhen(context => context.Request.Path.StartsWithSegments("/libcoin"), 
+    builder => builder.UseMiddleware<ApiKeyMiddleware>());
 
 app.MapControllers();
 
@@ -87,3 +95,16 @@ app.Run();
     options.AddPolicy("AllowSpecificOrigin",
         builder => builder.WithOrigins("*"));
 }*/
+
+void CreateNewApiKey(int permissions, string developerName, string keyPurpose)
+{
+    var apiServer = app.Services.GetService<IApiKeyService>();
+    apiServer!.CreateApiKey(new ApiKey
+    {
+        Key = Guid.NewGuid().ToString(),
+        Permissions = permissions,
+        DeveloperName = developerName,
+        KeyPurpose = keyPurpose,
+        DateCreated = DateTime.Now
+    });
+}

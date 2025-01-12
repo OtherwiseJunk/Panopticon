@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Panopticon.Data.Contexts;
 
@@ -11,9 +12,11 @@ using Panopticon.Data.Contexts;
 namespace Panopticon.Data.Migrations
 {
     [DbContext(typeof(PanopticonContext))]
-    partial class PanopticonContextModelSnapshot : ModelSnapshot
+    [Migration("20250104023128_AddLibcoinAndApiKeyModels")]
+    partial class AddLibcoinAndApiKeyModels
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -31,10 +34,6 @@ namespace Panopticon.Data.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<decimal>("Id"));
 
                     b.Property<string>("ApiKey")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("TransactionData")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
