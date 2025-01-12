@@ -1,0 +1,19 @@
+meta {
+  name: Grant Libcoin
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{PanopticonHost}}/libcoin/grant
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "UserId": "GodKey",
+    "Amount": 68,
+    "Message": "Testing Grant"
+  }
+}
