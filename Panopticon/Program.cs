@@ -47,7 +47,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<FeedbackService>()
                 .AddSingleton<UserRecordService>()
-                .AddSingleton<OocService>()
+                .AddSingleton<IOocService, OocService>()
                 .AddSingleton<FFMPEGService>()
                 .AddSingleton<DiscordService>()
                 .AddSingleton<TokenService>()
