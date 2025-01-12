@@ -5,8 +5,10 @@ using Panopticon.Controllers;
 using Panopticon.Data.Contexts;
 using Panopticon.Data.Interfaces;
 using Panopticon.Data.Services;
+using Panopticon.Enums;
 using Panopticon.Middleware;
 using Panopticon.Services;
+using Panopticon.Shared.Models.Core;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 DiscordSocketClient _socketClient;
@@ -93,3 +95,16 @@ app.Run();
     options.AddPolicy("AllowSpecificOrigin",
         builder => builder.WithOrigins("*"));
 }*/
+
+void CreateNewApiKey(int permissions, string developerName, string keyPurpose)
+{
+    var apiServer = app.Services.GetService<IApiKeyService>();
+    apiServer!.CreateApiKey(new ApiKey
+    {
+        Key = Guid.NewGuid().ToString(),
+        Permissions = permissions,
+        DeveloperName = developerName,
+        KeyPurpose = keyPurpose,
+        DateCreated = DateTime.Now
+    });
+}
