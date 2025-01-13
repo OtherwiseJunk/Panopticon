@@ -36,7 +36,7 @@ public class LibcoinController(IApiKeyService apiKeyService, ILibcoinService lib
             return Unauthorized();
         }        
         
-        var balances = _libcoinService.GetAllLibcoinBalances();
+        var balances = _libcoinService.GetAllLibcoinBalances().OrderByDescending((b) => b.Balance).ToList();
         return Ok(PageResults(balances, pageNumber, pageSize));
     }
 
@@ -49,7 +49,7 @@ public class LibcoinController(IApiKeyService apiKeyService, ILibcoinService lib
             return Unauthorized();
         }
         
-        var transactions = _libcoinService.GetAllLibcoinTransactions();
+        var transactions = _libcoinService.GetAllLibcoinTransactions().OrderByDescending((t) => t.TransactionDate).ToList();
         transactions = MapApiKeyToDeveloperName(transactions);
         
         return Ok(PageResults(transactions, pageNumber, pageSize));
@@ -64,7 +64,7 @@ public class LibcoinController(IApiKeyService apiKeyService, ILibcoinService lib
             return Unauthorized();
         }
 
-        var transactions = _libcoinService.GetAllLibcoinTransactionsForUser(userId);
+        var transactions = _libcoinService.GetAllLibcoinTransactionsForUser(userId).OrderByDescending((t) => t.TransactionDate).ToList();
         transactions = MapApiKeyToDeveloperName(transactions);
         
         return Ok(PageResults(transactions, pageNumber, pageSize));
@@ -79,7 +79,7 @@ public class LibcoinController(IApiKeyService apiKeyService, ILibcoinService lib
             return Unauthorized();
         }
 
-        var transactions = _libcoinService.GetSentLibcoinTransactionsForUser(userId);
+        var transactions = _libcoinService.GetSentLibcoinTransactionsForUser(userId).OrderByDescending((t) => t.TransactionDate).ToList();
         transactions = MapApiKeyToDeveloperName(transactions);
         
         return Ok(PageResults(transactions, pageNumber, pageSize));
@@ -94,7 +94,7 @@ public class LibcoinController(IApiKeyService apiKeyService, ILibcoinService lib
             return Unauthorized();
         }
 
-        var transactions = _libcoinService.GetReceivedLibcoinTransactionsForUser(userId);
+        var transactions = _libcoinService.GetReceivedLibcoinTransactionsForUser(userId).OrderByDescending((t) => t.TransactionDate).ToList();
         transactions = MapApiKeyToDeveloperName(transactions);
         
         return Ok(PageResults(transactions, pageNumber, pageSize));
