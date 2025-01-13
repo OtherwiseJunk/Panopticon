@@ -18,7 +18,7 @@ public class LibcoinController(IApiKeyService apiKeyService, ILibcoinService lib
     public IActionResult GetLibcoinBalance(string userId)
     {
         var apiKey = Request.Headers["ApiKey"];
-        if (!_apiKeyService.HasPermission(apiKey!, ApiPermission.LibcoinReadAll) || !(apiKey == userId && _apiKeyService.HasPermission(apiKey!, ApiPermission.LibcoinReadPersonal)))
+        if (!(_apiKeyService.HasPermission(apiKey!, ApiPermission.LibcoinReadAll) || (apiKey == userId && _apiKeyService.HasPermission(apiKey!, ApiPermission.LibcoinReadPersonal)) ) )
         {
             return Unauthorized();
         }
