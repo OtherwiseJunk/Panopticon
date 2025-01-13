@@ -27,7 +27,7 @@ public class LibcoinController(IApiKeyService apiKeyService, ILibcoinService lib
         return Ok(balance);
     }
 
-    [HttpGet("/balances")]
+    [HttpGet("balances")]
     public IActionResult GetAllLibcoinBalances(int pageNumber = 1, int pageSize = 10)
     {
         var apiKey = Request.Headers["ApiKey"];
