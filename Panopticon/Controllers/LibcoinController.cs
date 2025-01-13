@@ -17,8 +17,27 @@ public class LibcoinController(IApiKeyService apiKeyService, ILibcoinService lib
     [HttpGet("{userId}")]
     public IActionResult GetLibcoinBalance(string userId)
     {
+        var apiKey = Request.Headers["ApiKey"];
+        if (!_apiKeyService.HasPermission(apiKey!, ApiPermission.LibcoinReadAll) || !(apiKey == userId && _apiKeyService.HasPermission(apiKey!, ApiPermission.LibcoinReadPersonal)))
+        {
+            return Unauthorized();
+        }
+        
         double balance = _libcoinService.GetLibcoinBalance(userId);
         return Ok(balance);
+    }
+
+    [HttpGet("/balances")]
+    public IActionResult GetAllLibcoinBalances(int pageNumber = 1, int pageSize = 10)
+    {
+        var apiKey = Request.Headers["ApiKey"];
+        if (!_apiKeyService.HasPermission(apiKey!, ApiPermission.LibcoinReadAll))
+        {
+            return Unauthorized();
+        }        
+        
+        var balances = _libcoinService.GetAllLibcoinBalances();
+        return Ok(PageResults(balances, pageNumber, pageSize));
     }
 
     [HttpGet("transactions")]
