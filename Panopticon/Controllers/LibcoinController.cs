@@ -18,7 +18,7 @@ public class LibcoinController(IApiKeyService apiKeyService, ILibcoinService lib
     public IActionResult GetLibcoinBalance(string userId)
     {
         var apiKey = Request.Headers["ApiKey"];
-        if (!(_apiKeyService.HasPermission(apiKey!, ApiPermission.LibcoinReadAll) || (apiKey == userId && _apiKeyService.HasPermission(apiKey!, ApiPermission.LibcoinReadPersonal)) ) )
+        if (!(HasReadAllPermission(apiKey!)|| !(apiKey == userId && HasReadPersonalPermission(apiKey!))))
         {
             return Unauthorized();
         }
@@ -31,7 +31,7 @@ public class LibcoinController(IApiKeyService apiKeyService, ILibcoinService lib
     public IActionResult GetAllLibcoinBalances(int pageNumber = 1, int pageSize = 10)
     {
         var apiKey = Request.Headers["ApiKey"];
-        if (!_apiKeyService.HasPermission(apiKey!, ApiPermission.LibcoinReadAll))
+        if (!HasReadAllPermission(apiKey!))
         {
             return Unauthorized();
         }        
@@ -44,7 +44,7 @@ public class LibcoinController(IApiKeyService apiKeyService, ILibcoinService lib
     public IActionResult GetAllLibcoinTransactions(int pageNumber = 1, int pageSize = 10)
     {
         var apiKey = Request.Headers["ApiKey"];
-        if (!_apiKeyService.HasPermission(apiKey!, ApiPermission.LibcoinReadAll))
+        if (!HasReadAllPermission(apiKey!))
         {
             return Unauthorized();
         }
@@ -59,7 +59,7 @@ public class LibcoinController(IApiKeyService apiKeyService, ILibcoinService lib
     public IActionResult GetAllLibcoinTransactionsForUser(string userId, int pageNumber = 1, int pageSize = 10)
     {
         var apiKey = Request.Headers["ApiKey"];
-        if (!_apiKeyService.HasPermission(apiKey!, ApiPermission.LibcoinReadAll) || !(apiKey == userId && _apiKeyService.HasPermission(apiKey!, ApiPermission.LibcoinReadPersonal)))
+        if (!(HasReadAllPermission(apiKey!)|| !(apiKey == userId && HasReadPersonalPermission(apiKey!))))
         {
             return Unauthorized();
         }
@@ -74,7 +74,7 @@ public class LibcoinController(IApiKeyService apiKeyService, ILibcoinService lib
     public IActionResult GetAllLibcoinTransactionsSentByUser(string userId, int pageNumber = 1, int pageSize = 10)
     {
         var apiKey = Request.Headers["ApiKey"];
-        if (!_apiKeyService.HasPermission(apiKey!, ApiPermission.LibcoinReadAll) || !(apiKey == userId && _apiKeyService.HasPermission(apiKey!, ApiPermission.LibcoinReadPersonal)))
+        if (!(HasReadAllPermission(apiKey!)|| !(apiKey == userId && HasReadPersonalPermission(apiKey!))))
         {
             return Unauthorized();
         }
@@ -84,19 +84,20 @@ public class LibcoinController(IApiKeyService apiKeyService, ILibcoinService lib
         
         return Ok(PageResults(transactions, pageNumber, pageSize));
     }
-    
+
     [HttpGet("transactions/{userId}/received")]
     public IActionResult GetAllLibcoinTransactionsReceivedByUser(string userId, int pageNumber = 1, int pageSize = 10)
     {
         var apiKey = Request.Headers["ApiKey"];
-        if (!_apiKeyService.HasPermission(apiKey!, ApiPermission.LibcoinReadAll) || !(apiKey == userId && _apiKeyService.HasPermission(apiKey!, ApiPermission.LibcoinReadPersonal)))
+        if (!(HasReadAllPermission(apiKey!) || !(apiKey == userId && HasReadPersonalPermission(apiKey!))))
         {
             return Unauthorized();
         }
 
-        var transactions = _libcoinService.GetReceivedLibcoinTransactionsForUser(userId).OrderByDescending((t) => t.TransactionDate).ToList();
+        var transactions = _libcoinService.GetReceivedLibcoinTransactionsForUser(userId)
+            .OrderByDescending((t) => t.TransactionDate).ToList();
         transactions = MapApiKeyToDeveloperName(transactions);
-        
+
         return Ok(PageResults(transactions, pageNumber, pageSize));
     }
 
@@ -104,10 +105,7 @@ public class LibcoinController(IApiKeyService apiKeyService, ILibcoinService lib
     public IActionResult SendLibcoin([FromBody] SendLibcoinRequest request)
     {
         var apiKey = Request.Headers["ApiKey"];
-        var isBroker = _apiKeyService.HasPermission(apiKey!, ApiPermission.LibcoinBroker);
-        var isSendingUser = apiKey == request.SendingUserId;
-        var isAuthorizedToSend = isSendingUser && _apiKeyService.HasPermission(apiKey!, ApiPermission.LibcoinSend);
-        if (!(isBroker || isAuthorizedToSend))
+        if (!( HasBrokerPermission(apiKey!) || (apiKey == request.SendingUserId && HasSendPermission(apiKey!))))
         {
             return Unauthorized();
         }
@@ -159,7 +157,7 @@ public class LibcoinController(IApiKeyService apiKeyService, ILibcoinService lib
     public IActionResult DeductLibcoin([FromBody] DeductLibcoinRequest request)
     {
         var apiKey = Request.Headers["ApiKey"];
-        if (!_apiKeyService.HasPermission(apiKey!, ApiPermission.LibcoinDeduct))
+        if (!HasDeductPermission(apiKey!))
         {
             return Unauthorized();
         }
@@ -203,5 +201,25 @@ public class LibcoinController(IApiKeyService apiKeyService, ILibcoinService lib
     private List<T> PageResults<T>(List<T> results, int pageNumber, int pageSize)
     {
         return results.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+    }
+    private bool HasReadPersonalPermission(string apiKey)
+    {
+        return _apiKeyService.HasPermission(apiKey, ApiPermission.LibcoinReadPersonal);
+    }
+    private bool HasReadAllPermission(string apiKey)
+    {
+        return _apiKeyService.HasPermission(apiKey, ApiPermission.LibcoinReadAll);
+    }
+    private bool HasBrokerPermission(string apiKey)
+    {
+        return _apiKeyService.HasPermission(apiKey, ApiPermission.LibcoinBroker);
+    }
+    private bool HasDeductPermission(string apiKey)
+    {
+        return _apiKeyService.HasPermission(apiKey, ApiPermission.LibcoinDeduct);
+    }
+    private bool HasSendPermission(string apiKey)
+    {
+        return _apiKeyService.HasPermission(apiKey, ApiPermission.LibcoinSend);
     }
 }
