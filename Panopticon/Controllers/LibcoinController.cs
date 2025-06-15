@@ -34,10 +34,12 @@ public class LibcoinController(IApiKeyService apiKeyService, ILibcoinService lib
         if (!HasReadAllPermission(apiKey!))
         {
             return Unauthorized();
-        }        
-        
-        var balances = _libcoinService.GetAllLibcoinBalances().OrderByDescending((b) => b.Balance).ToList();
-        return Ok(PageResults(balances, pageNumber, pageSize));
+        }
+
+        var balancesQuery = _libcoinService.GetAllLibcoinBalances().OrderByDescending((b) => b.Balance);
+
+        var pagedBalances = PageResults(balancesQuery, pageNumber, pageSize);
+        return Ok(pagedBalances);
     }
 
     [HttpGet("transactions")]
@@ -48,11 +50,13 @@ public class LibcoinController(IApiKeyService apiKeyService, ILibcoinService lib
         {
             return Unauthorized();
         }
+
+        var transactionsQuery = _libcoinService.GetAllLibcoinTransactions().OrderByDescending((t) => t.TransactionDate);
+
+        var pagedTransactions = PageResults(transactionsQuery, pageNumber, pageSize).ToList();
+        pagedTransactions = MapApiKeyToDeveloperName(pagedTransactions);
         
-        var transactions = _libcoinService.GetAllLibcoinTransactions().OrderByDescending((t) => t.TransactionDate).ToList();
-        transactions = MapApiKeyToDeveloperName(transactions);
-        
-        return Ok(PageResults(transactions, pageNumber, pageSize));
+        return Ok(pagedTransactions);
     }
 
     [HttpGet("transactions/{userId}")]
@@ -64,10 +68,12 @@ public class LibcoinController(IApiKeyService apiKeyService, ILibcoinService lib
             return Unauthorized();
         }
 
-        var transactions = _libcoinService.GetAllLibcoinTransactionsForUser(userId).OrderByDescending((t) => t.TransactionDate).ToList();
-        transactions = MapApiKeyToDeveloperName(transactions);
-        
-        return Ok(PageResults(transactions, pageNumber, pageSize));
+        var transactionsQuery = _libcoinService.GetAllLibcoinTransactionsForUser(userId).OrderByDescending((t) => t.TransactionDate);
+
+        var pagedTransactions = PageResults(transactionsQuery, pageNumber, pageSize).ToList();
+        pagedTransactions = MapApiKeyToDeveloperName(pagedTransactions);
+
+        return Ok(pagedTransactions);
     }
 
     [HttpGet("transactions/{userId}/sent")]
@@ -79,10 +85,13 @@ public class LibcoinController(IApiKeyService apiKeyService, ILibcoinService lib
             return Unauthorized();
         }
 
-        var transactions = _libcoinService.GetSentLibcoinTransactionsForUser(userId).OrderByDescending((t) => t.TransactionDate).ToList();
-        transactions = MapApiKeyToDeveloperName(transactions);
-        
-        return Ok(PageResults(transactions, pageNumber, pageSize));
+        var transactionsQuery = _libcoinService.GetSentLibcoinTransactionsForUser(userId)
+            .OrderByDescending(t => t.TransactionDate);
+
+        var pagedTransactions = PageResults(transactionsQuery, pageNumber, pageSize).ToList();
+        pagedTransactions = MapApiKeyToDeveloperName(pagedTransactions);
+
+        return Ok(pagedTransactions);
     }
 
     [HttpGet("transactions/{userId}/received")]
@@ -94,11 +103,13 @@ public class LibcoinController(IApiKeyService apiKeyService, ILibcoinService lib
             return Unauthorized();
         }
 
-        var transactions = _libcoinService.GetReceivedLibcoinTransactionsForUser(userId)
-            .OrderByDescending((t) => t.TransactionDate).ToList();
-        transactions = MapApiKeyToDeveloperName(transactions);
+        var transactionsQuery = _libcoinService.GetReceivedLibcoinTransactionsForUser(userId)
+            .OrderByDescending(t => t.TransactionDate);
 
-        return Ok(PageResults(transactions, pageNumber, pageSize));
+        var pagedTransactions = PageResults(transactionsQuery, pageNumber, pageSize).ToList();
+        pagedTransactions = MapApiKeyToDeveloperName(pagedTransactions);
+
+        return Ok(pagedTransactions);
     }
 
     [HttpPost("send")]
@@ -183,24 +194,49 @@ public class LibcoinController(IApiKeyService apiKeyService, ILibcoinService lib
 
     private List<LibcoinTransaction> MapApiKeyToDeveloperName(List<LibcoinTransaction> transactions)
     {
+        if (!transactions.Any())
+        {
+            return transactions;
+        }
+
+        var apiKeyStringsToResolve = new HashSet<string>();
         foreach (var transaction in transactions)
         {
             if (!ulong.TryParse(transaction.SendingUser, out _))
             {
-                transaction.SendingUser = _apiKeyService.TryGetApiKey(transaction.SendingUser)?.DeveloperName ?? "Unknown";
+                apiKeyStringsToResolve.Add(transaction.SendingUser);
             }
             if (!ulong.TryParse(transaction.ReceivingUser, out _))
             {
-                transaction.ReceivingUser = _apiKeyService.TryGetApiKey(transaction.ReceivingUser)?.DeveloperName ?? "Unknown";
+                apiKeyStringsToResolve.Add(transaction.ReceivingUser);
+            }
+        }
+
+        if (!apiKeyStringsToResolve.Any())
+        {
+            return transactions;
+        }
+
+        var developerNamesMap = _apiKeyService.GetDeveloperNamesForKeys(apiKeyStringsToResolve);
+
+        foreach (var transaction in transactions)
+        {
+            if (!ulong.TryParse(transaction.SendingUser, out _))
+            {
+                transaction.SendingUser = developerNamesMap.TryGetValue(transaction.SendingUser, out var devName) ? devName : "Unknown";
+            }
+            if (!ulong.TryParse(transaction.ReceivingUser, out _))
+            {
+                transaction.ReceivingUser = developerNamesMap.TryGetValue(transaction.ReceivingUser, out var devName) ? devName : "Unknown";
             }
         }
 
         return transactions;
     }
     
-    private List<T> PageResults<T>(List<T> results, int pageNumber, int pageSize)
+    private IQueryable<T> PageResults<T>(IOrderedQueryable<T> query, int pageNumber, int pageSize)
     {
-        return results.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+        return query.Skip((pageNumber - 1) * pageSize).Take(pageSize);
     }
     private bool HasReadPersonalPermission(string apiKey)
     {

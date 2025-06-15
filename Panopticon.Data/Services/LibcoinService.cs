@@ -18,34 +18,36 @@ public class LibcoinService(IDbContextFactory<PanopticonContext> contextFactory,
         context.SaveChanges();
     }
 
-    public List<LibcoinTransaction> GetAllLibcoinTransactionsForUser(string userId)
+    private void AddLibcoinTransactionInternal(PanopticonContext context, LibcoinTransaction transaction)
+    {
+        context.LibcoinTransactions.Add(transaction);
+    }
+
+    public IQueryable<LibcoinTransaction> GetAllLibcoinTransactionsForUser(string userId)
     {
         using PanopticonContext context = contextFactory.CreateDbContext();
         return context.LibcoinTransactions
-            .Where(t => t.SendingUser == userId || t.ReceivingUser == userId)
-            .ToList();
+            .Where(t => t.SendingUser == userId || t.ReceivingUser == userId);
     }
 
-    public List<LibcoinTransaction> GetAllLibcoinTransactions()
+    public IQueryable<LibcoinTransaction> GetAllLibcoinTransactions()
     {
         using PanopticonContext context = contextFactory.CreateDbContext();
-        return context.LibcoinTransactions.ToList();
+        return context.LibcoinTransactions;
     }
 
-    public List<LibcoinTransaction> GetReceivedLibcoinTransactionsForUser(string userId)
-    {
-        using PanopticonContext context = contextFactory.CreateDbContext();
-        return context.LibcoinTransactions
-            .Where(t => t.ReceivingUser == userId)
-            .ToList();
-    }
-
-    public List<LibcoinTransaction> GetSentLibcoinTransactionsForUser(string userId)
+    public IQueryable<LibcoinTransaction> GetReceivedLibcoinTransactionsForUser(string userId)
     {
         using PanopticonContext context = contextFactory.CreateDbContext();
         return context.LibcoinTransactions
-            .Where(t => t.SendingUser == userId)
-            .ToList();
+            .Where(t => t.ReceivingUser == userId);
+    }
+
+    public IQueryable<LibcoinTransaction> GetSentLibcoinTransactionsForUser(string userId)
+    {
+        using PanopticonContext context = contextFactory.CreateDbContext();
+        return context.LibcoinTransactions
+            .Where(t => t.SendingUser == userId);
     }
 
     public double GetLibcoinBalance(string userId)
@@ -56,10 +58,10 @@ public class LibcoinService(IDbContextFactory<PanopticonContext> contextFactory,
         return balance?.Balance ?? 0;
     }
 
-    public List<LibcoinUserBalance> GetAllLibcoinBalances()
+    public IQueryable<LibcoinUserBalance> GetAllLibcoinBalances()
     {
         using PanopticonContext context = contextFactory.CreateDbContext();
-        return context.LibcoinUserBalances.ToList();
+        return context.LibcoinUserBalances;
     }
 
     public void SendLibcoin(string senderId, string receiverId, double amount, string? message)
@@ -78,7 +80,7 @@ public class LibcoinService(IDbContextFactory<PanopticonContext> contextFactory,
 
             if (receiverBalance == null)
             {
-                receiverBalance = CreateNewLibcoinUserBalance(receiverId);
+                receiverBalance = CreateAndAddNewLibcoinUserBalanceInternal(context,(receiverId));
             }
 
             if (senderBalance.Balance < amount)
@@ -106,7 +108,7 @@ public class LibcoinService(IDbContextFactory<PanopticonContext> contextFactory,
                 transactionType = LibcoinTransactionType.ApiTransaction;
             }
 
-            CreateLibcoinTransaction(new LibcoinTransaction
+            AddLibcoinTransactionInternal(context, new LibcoinTransaction
             {
                 SendingUser = senderId,
                 ReceivingUser = receiverId,
@@ -125,18 +127,15 @@ public class LibcoinService(IDbContextFactory<PanopticonContext> contextFactory,
             throw;
         }
     }
-    
-    private LibcoinUserBalance CreateNewLibcoinUserBalance(string userId)
+    private LibcoinUserBalance CreateAndAddNewLibcoinUserBalanceInternal(PanopticonContext context, string userId)
     {
-        var context = contextFactory.CreateDbContext();
-        context.LibcoinUserBalances.Add(new LibcoinUserBalance
+        var newBalance = new LibcoinUserBalance
         {
             UserId = userId,
             Balance = 0
-        });
-        context.SaveChanges();
-        
-        return context.LibcoinUserBalances.First(b => b.UserId == userId);
+        };
+        context.LibcoinUserBalances.Add(newBalance);
+        return newBalance;
     }
 
     public void GrantLibcoin(string userId, double amount, string authorizingKey, string message)
@@ -155,13 +154,12 @@ public class LibcoinService(IDbContextFactory<PanopticonContext> contextFactory,
                     Balance = 0
                 };
                 context.LibcoinUserBalances.Add(receiverBalance);
-                context.SaveChanges();
             }
 
             receiverBalance.Balance += amount;
             context.LibcoinUserBalances.Update(receiverBalance);
 
-            CreateLibcoinTransaction(new LibcoinTransaction
+            AddLibcoinTransactionInternal(context, new LibcoinTransaction
             {
                 SendingUser = authorizingKey,
                 ReceivingUser = userId,
@@ -170,7 +168,7 @@ public class LibcoinService(IDbContextFactory<PanopticonContext> contextFactory,
                 TransactionType = LibcoinTransactionType.AdminTransaction,
                 TransactionDate = DateTime.Now
             });
-            
+
             context.SaveChanges();
             transaction.Commit();
         }
@@ -202,12 +200,12 @@ public class LibcoinService(IDbContextFactory<PanopticonContext> contextFactory,
             }
             else
             {
-                receiverBalance.Balance -= amount;    
+                receiverBalance.Balance -= amount;
             }
-            
+
             context.LibcoinUserBalances.Update(receiverBalance);
 
-            CreateLibcoinTransaction(new LibcoinTransaction
+            AddLibcoinTransactionInternal(context, new LibcoinTransaction
             {
                 SendingUser = authorizingKey,
                 ReceivingUser = userId,
@@ -216,7 +214,7 @@ public class LibcoinService(IDbContextFactory<PanopticonContext> contextFactory,
                 TransactionType = LibcoinTransactionType.AdminTransaction,
                 TransactionDate = DateTime.Now
             });
-            
+
             context.SaveChanges();
             transaction.Commit();
         }

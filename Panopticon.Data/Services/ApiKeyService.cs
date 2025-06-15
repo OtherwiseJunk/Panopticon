@@ -66,4 +66,13 @@ public class ApiKeyService(IDbContextFactory<PanopticonContext> contextFactory, 
         context.ApiKeys.Add(apiKey);
         context.SaveChanges();
     }
+
+    public IDictionary<string, string> GetDeveloperNamesForKeys(IEnumerable<string> apiKeys)
+    {
+        using PanopticonContext context = contextFactory.CreateDbContext();
+        return context.ApiKeys
+            .Where(k => apiKeys.Contains(k.Key) && k.DeveloperName != null)
+            .Select(k => new { k.Key, k.DeveloperName })
+            .ToDictionary(k => k.Key, k => k.DeveloperName!); 
+    }
 }

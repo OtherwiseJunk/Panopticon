@@ -1,6 +1,7 @@
 using Panopticon.Enums;
 using Panopticon.Models.Core;
 using Panopticon.Shared.Models.Core;
+using System.Collections.Generic;
 
 namespace Panopticon.Data.Interfaces;
 
@@ -13,4 +14,5 @@ public interface IApiKeyService
     bool HasPermissions(ApiKey apiKey, ApiPermission[] permissions);
     void CreateApiTransaction(ApiTransaction transaction);
     void CreateApiKey(ApiKey apiKey);
+    IDictionary<string, string> GetDeveloperNamesForKeys(IEnumerable<string> apiKeys);
 }
