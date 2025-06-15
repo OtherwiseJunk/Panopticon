@@ -1,5 +1,7 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Panopticon.Data.Contexts;
 using Panopticon.Data.Interfaces;
 using Panopticon.Enums;
 using Panopticon.Models.Core;
@@ -9,10 +11,11 @@ namespace Panopticon.Controllers;
 
 [ApiController]
 [Route("/libcoin")]
-public class LibcoinController(IApiKeyService apiKeyService, ILibcoinService libcoinService) : ControllerBase
+public class LibcoinController(IApiKeyService apiKeyService, ILibcoinService libcoinService, IDbContextFactory<PanopticonContext> contextFactory) : ControllerBase
 {
     private readonly IApiKeyService _apiKeyService = apiKeyService;
     private readonly ILibcoinService _libcoinService = libcoinService;
+    private readonly IDbContextFactory<PanopticonContext> _contextFactory = contextFactory;
     
     [HttpGet("{userId}")]
     public IActionResult GetLibcoinBalance(string userId)
@@ -36,9 +39,10 @@ public class LibcoinController(IApiKeyService apiKeyService, ILibcoinService lib
             return Unauthorized();
         }
 
-        var balancesQuery = _libcoinService.GetAllLibcoinBalances().OrderByDescending((b) => b.Balance);
-
-        var pagedBalances = PageResults(balancesQuery, pageNumber, pageSize);
+        using PanopticonContext context = _contextFactory.CreateDbContext();
+        var balancesQuery = _libcoinService.GetAllLibcoinBalances(context).OrderByDescending((b) => b.Balance);
+    
+        var pagedBalances = PageResults(balancesQuery, pageNumber, pageSize).ToList();
         return Ok(pagedBalances);
     }
 
@@ -51,10 +55,11 @@ public class LibcoinController(IApiKeyService apiKeyService, ILibcoinService lib
             return Unauthorized();
         }
 
-        var transactionsQuery = _libcoinService.GetAllLibcoinTransactions().OrderByDescending((t) => t.TransactionDate);
+        using PanopticonContext context = _contextFactory.CreateDbContext();
+        var transactionsQuery = _libcoinService.GetAllLibcoinTransactions(context).OrderByDescending((t) => t.TransactionDate);
 
         var pagedTransactions = PageResults(transactionsQuery, pageNumber, pageSize).ToList();
-        pagedTransactions = MapApiKeyToDeveloperName(pagedTransactions);
+        pagedTransactions = MapApiKeyToDeveloperName(pagedTransactions).ToList();
         
         return Ok(pagedTransactions);
     }
@@ -68,7 +73,8 @@ public class LibcoinController(IApiKeyService apiKeyService, ILibcoinService lib
             return Unauthorized();
         }
 
-        var transactionsQuery = _libcoinService.GetAllLibcoinTransactionsForUser(userId).OrderByDescending((t) => t.TransactionDate);
+        using PanopticonContext context = _contextFactory.CreateDbContext();
+        var transactionsQuery = _libcoinService.GetAllLibcoinTransactionsForUser(context, userId).OrderByDescending((t) => t.TransactionDate);
 
         var pagedTransactions = PageResults(transactionsQuery, pageNumber, pageSize).ToList();
         pagedTransactions = MapApiKeyToDeveloperName(pagedTransactions);
@@ -85,7 +91,8 @@ public class LibcoinController(IApiKeyService apiKeyService, ILibcoinService lib
             return Unauthorized();
         }
 
-        var transactionsQuery = _libcoinService.GetSentLibcoinTransactionsForUser(userId)
+        using PanopticonContext context = _contextFactory.CreateDbContext();
+        var transactionsQuery = _libcoinService.GetSentLibcoinTransactionsForUser(context, userId)
             .OrderByDescending(t => t.TransactionDate);
 
         var pagedTransactions = PageResults(transactionsQuery, pageNumber, pageSize).ToList();
@@ -103,7 +110,8 @@ public class LibcoinController(IApiKeyService apiKeyService, ILibcoinService lib
             return Unauthorized();
         }
 
-        var transactionsQuery = _libcoinService.GetReceivedLibcoinTransactionsForUser(userId)
+        using PanopticonContext context = _contextFactory.CreateDbContext();
+        var transactionsQuery = _libcoinService.GetReceivedLibcoinTransactionsForUser(context, userId)
             .OrderByDescending(t => t.TransactionDate);
 
         var pagedTransactions = PageResults(transactionsQuery, pageNumber, pageSize).ToList();

@@ -23,29 +23,25 @@ public class LibcoinService(IDbContextFactory<PanopticonContext> contextFactory,
         context.LibcoinTransactions.Add(transaction);
     }
 
-    public IQueryable<LibcoinTransaction> GetAllLibcoinTransactionsForUser(string userId)
+    public IQueryable<LibcoinTransaction> GetAllLibcoinTransactionsForUser(PanopticonContext context, string userId)
     {
-        using PanopticonContext context = contextFactory.CreateDbContext();
         return context.LibcoinTransactions
             .Where(t => t.SendingUser == userId || t.ReceivingUser == userId);
     }
 
-    public IQueryable<LibcoinTransaction> GetAllLibcoinTransactions()
+    public IQueryable<LibcoinTransaction> GetAllLibcoinTransactions(PanopticonContext context)
     {
-        using PanopticonContext context = contextFactory.CreateDbContext();
         return context.LibcoinTransactions;
     }
 
-    public IQueryable<LibcoinTransaction> GetReceivedLibcoinTransactionsForUser(string userId)
+    public IQueryable<LibcoinTransaction> GetReceivedLibcoinTransactionsForUser(PanopticonContext context, string userId)
     {
-        using PanopticonContext context = contextFactory.CreateDbContext();
         return context.LibcoinTransactions
             .Where(t => t.ReceivingUser == userId);
     }
 
-    public IQueryable<LibcoinTransaction> GetSentLibcoinTransactionsForUser(string userId)
+    public IQueryable<LibcoinTransaction> GetSentLibcoinTransactionsForUser(PanopticonContext context, string userId)
     {
-        using PanopticonContext context = contextFactory.CreateDbContext();
         return context.LibcoinTransactions
             .Where(t => t.SendingUser == userId);
     }
@@ -58,9 +54,8 @@ public class LibcoinService(IDbContextFactory<PanopticonContext> contextFactory,
         return balance?.Balance ?? 0;
     }
 
-    public IQueryable<LibcoinUserBalance> GetAllLibcoinBalances()
+    public IQueryable<LibcoinUserBalance> GetAllLibcoinBalances(PanopticonContext context)
     {
-        using PanopticonContext context = contextFactory.CreateDbContext();
         return context.LibcoinUserBalances;
     }
 
