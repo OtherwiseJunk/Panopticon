@@ -364,3 +364,4 @@ FodyWeavers.xsd
 *.png
 *.mp4
 *.ogg
+.DS_Store
