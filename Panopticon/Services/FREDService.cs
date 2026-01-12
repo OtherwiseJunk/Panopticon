@@ -32,7 +32,17 @@ namespace Panopticon.Services
                     {
                         foreach(Observation observation in observationResponse.observations)
                         {
-                            observations.Add(new SahmRuleObservation(DateTime.Parse(observation.date), Double.Parse(observation.value) ));
+                            try
+                            {
+                                observations.Add(new SahmRuleObservation(DateTime.Parse(observation.date),
+                                    Double.Parse(observation.value)));
+                            }
+                            catch(Exception ex)
+                            {
+                                Console.WriteLine(ex.Message);
+                                Console.WriteLine("Encountered an error parsing observation");
+                                Console.WriteLine(JsonSerializer.Serialize(observation));
+                            }
                         }
                     }
                 }
