@@ -152,7 +152,6 @@ public class LibcoinService(IDbContextFactory<PanopticonContext> contextFactory,
             }
 
             receiverBalance.Balance += amount;
-            context.LibcoinUserBalances.Update(receiverBalance);
 
             AddLibcoinTransactionInternal(context, new LibcoinTransaction
             {
